@@ -1,0 +1,19 @@
+{
+  "name": "webarchiver",
+  "version": "1.0.0",
+  "description": "webarchiver",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/compute": "^1.2.0",
+    "@google-cloud/text-to-speech": "^2.3.0",
+    "archiver": "^3.1.1",
+    "cheerio": "^1.0.0-rc.3",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0"
+  }
+}
