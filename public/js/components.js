@@ -4,8 +4,15 @@ let options = {
   data: {
 
   },
+methods: {
+}
+,
   template: `<div>
-    HOLA
+      <form action="/upload" method="POST" enctype="multipart/form-data">
+      	<input type="file" name="filename" >
+      	<br>
+      	<input type="submit" value="Upload a file">
+      </form>
   </div>`
 } //end options
 let vm = new Vue(options);

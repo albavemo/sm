@@ -1,3 +1,4 @@
+
 const express = require('express');
 const fetch = require('node-fetch');
 const cheerio = require ('cheerio');
@@ -6,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const contentDisposition = require('content-disposition');
-
+const upload = require('express-fileupload');
 const app = express();
 const port = 2022;
 app.use(express.static(path.join(__dirname, 'public')));
@@ -86,24 +87,62 @@ function generateText(audioFile){
 	main().catch(console.error);
 }
 
-//here goes the routing
-app.get('/', (req, res) => (res.send(index.html)));
-app.get('/crawler', (req,res) => {
+function readScript(ruta){
+	var runner =  require('child_process');
+	runner.exec("php "+ruta + " ", (error, stdout, stderr) => {
+	if(error) {
+		console.log(`exec error: ${error}`);
+		return;
+	}
+	console.log(`stdout: ${stdout}`);
+});
+}
 
-	var source = '/Users/AlbaVendrellMoya/Desktop/SM/hackathon/sm-hackovid/media/'
+
+//declarar ruta a través de una variable que se setee al subir un archivo con el nombre de este
+app.use(upload())
+
+//here goes the routing
+app.get('/', (req, res) => {
+/*var ruta = "/public/index.php";
+readScript(ruta);*/
+res.sendFile(index.html)
+
+});
+
+app.post('/upload',(req, res) => {
+
+	if(req.files){
+		
+		var file = req.files.filename;
+		var filename = req.files.filename.name;
+			file.mv("/home/albavemo11/git/sm/media/uploaded/"+filename, function(err){
+				if(err){
+					console.log(err);
+					res.send("error occured")
+				}
+				else {
+					var audioFile = fs.readFileSync("/home/albavemo11/git/sm/media/uploaded/"+filename);
+					generateText(audioFile);
+					res.download("/home/albavemo11/git/sm/media/s2t_output.txt");
+				}
+			});
+	}
+});
+app.get('/apis', (req,res) => {
+
+	var source = '/home/albavemo11/git/sm/media/'
 	var textInput_Name = 'data.txt'
 	var audioInput_Name = 'example3.wav'
-
+	
 	var textFile = fs.readFileSync(source + textInput_Name,'utf8');
 	var audioFile = fs.readFileSync(source +  audioInput_Name);
-
-	generateAudio(textFile);
-	generateText(audioFile);
+	var videoAIRute = 'public/index.php';
+	readScript(videoAIRute);
+//	generateAudio(textFile);
+//	generateText(audioFile);
 	
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!` + '\n'));
-
-
-
 
