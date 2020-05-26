@@ -12,6 +12,7 @@
     "@google-cloud/compute": "^1.2.0",
     "@google-cloud/speech": "^3.6.0",
     "@google-cloud/text-to-speech": "^2.3.0",
+    "@google-cloud/video-intelligence": "^2.10.0",
     "archiver": "^3.1.1",
     "cheerio": "^1.0.0-rc.3",
     "express": "^4.17.1",

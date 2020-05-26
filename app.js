@@ -91,7 +91,7 @@ function readScript(ruta){
 	var runner =  require('child_process');
 	runner.exec("php "+ruta + " ", (error, stdout, stderr) => {
 	if(error) {
-		console.log(`exec error: ${error}`);
+		console.log(`exec errorern: ${error}`);
 		return;
 	}
 	console.log(`stdout: ${stdout}`);
@@ -129,20 +129,27 @@ app.post('/upload',(req, res) => {
 			});
 	}
 });
-app.get('/apis', (req,res) => {
-
-	var source = '/home/albavemo11/git/sm/media/'
-	var textInput_Name = 'data.txt'
-	var audioInput_Name = 'example3.wav'
+app.post('/apis', (req,res) => {
 	
-	var textFile = fs.readFileSync(source + textInput_Name,'utf8');
-	var audioFile = fs.readFileSync(source +  audioInput_Name);
-	var videoAIRute = 'public/index.php';
-	readScript(videoAIRute);
+	if(req.files) {
+		var file = req.files.filename;
+		var filename = req.files.filename.name;
+			file.mv("/home/albavemo11/git/sm/input/"+filename, function(err){
+        			if(err){
+					console.log(err);
+					res.send("error, not file found");
+				}
+				else{
+					var videoAIRute = "/home/albavemo11/git/sm/public/index.php";
+					readScript(videoAIRute);
+					
+				}
+			});
+	}
+});
+
 //	generateAudio(textFile);
 //	generateText(audioFile);
 	
-});
-
 app.listen(port, () => console.log(`Example app listening on port ${port}!` + '\n'));
 

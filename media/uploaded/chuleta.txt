@@ -1,0 +1,10 @@
+ionic: servidor web
+
+INFRAESTRUCTURA:
+- MV Cloud : Firewall rule 2022 port.
+--> SPA deployeada en cloud.
+- Herramientras de desarrollo : HTML, CSS, JS, Node js, Vue, php
+
+Cloud Speech API: Text, speech-to-text.
+Cloud Video Intelligence API: Label detection, Shot Change Detection.
+Compute Engine
