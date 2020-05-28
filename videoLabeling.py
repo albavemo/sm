@@ -1,20 +1,28 @@
 #!/usr/bin/python
 
 import os
-import sys
-from google.cloud import videointelligence as vi
-from googletrans import Translator
 import io
-import numpy as np
-import cv2
+from google.cloud import videointelligence as vi
+from moviepy.editor import *
+import Text2Speech
 
 video_client = vi.VideoIntelligenceServiceClient()
 
-def getScenes(video, framerate, name = ""):
+
+PATH = os.path.dirname(__file__) + "/"
+INPUT = PATH + "input/"
+OUTPUT = PATH + "output/"
+SCENES = PATH + "scenes/"
+AUDIOS = PATH + "audios/"
+
+def getScenes(videoName):
+    with io.open(videoName, 'rb') as movie:
+        video = movie.read()
+
     features = [vi.enums.Feature.SHOT_CHANGE_DETECTION]
 
     operation = video_client.annotate_video(input_content=video, features=features)
-    print("\nProcessing video *" + name.upper() + "* for shot change annotations:")
+    print("\nProcessing video *" + videoName[:-4].upper() + "* for shot change annotations:")
 
     result = operation.result(timeout=1000)
     print('\nFinished processing.')
@@ -24,63 +32,66 @@ def getScenes(video, framerate, name = ""):
     for shot in result.annotation_results[0].shot_annotations:
         start_time = shot.start_time_offset.seconds + shot.start_time_offset.nanos / 1e9
         end_time = shot.end_time_offset.seconds + shot.end_time_offset.nanos / 1e9
-        scenesTime.append([round(start_time*framerate), round(end_time*framerate)])
+        scenesTime.append([start_time, end_time])
 
     return scenesTime
 
-def getLabels(video, name = ""):
+def getLabels(videoName):
+    with io.open(videoName, 'rb') as movie:
+        video = movie.read()
+
+    print(type(video))
+
     features = [vi.enums.Feature.LABEL_DETECTION]
 
     operation = video_client.annotate_video(input_content=video, features=features)
-    print("\nProcessing video *" + name.upper() + "* for shot change annotations:")
+    print("\nProcessing video *" + videoName.upper() + "* for labels in scene:")
 
     result = operation.result(timeout=120)
-    print('\nFinished processing.')
     AR = result.annotation_results[0]
 
-    translator = Translator()
-    text_file = open("videoOutput.txt", "w")
-    for i in range(len(AR.segment_label_annotations)-1):        
-        text = translator.translate(AR.segment_label_annotations[i].entity.description, dest='es').text
-        text_file.write( text + "\n")
-    text = translator.translate(AR.segment_label_annotations[i+1].entity.description, dest='es').text
-    text_file.write(text)
-    text_file.close()
+    labels = ""
+    for i in range(len(AR.segment_label_annotations)):        
+        text = AR.segment_label_annotations[i].entity.description
+        print(text)
+        labels += text + "\n"
+    print('\nFinished processing.')
+
+    if ( labels == "" ):
+        labels = "No labels found"
+
+    return labels
 
 
 if __name__ == "__main__":
-    videoName = "input/fancy.mp4"
+    file_names = os.listdir(INPUT)
+    for videoName in file_names:
+        if ".mp4" in videoName:
+            video = VideoFileClip(INPUT + videoName)
 
-    
-    video = cv2.VideoCapture(videoName)
+            fps = round(video.reader.fps)
+            width = round(video.w)
+            height = round(video.h)
 
-    fps = round(video.get(cv2.CAP_PROP_FPS))
-    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            scenes = getScenes(INPUT + videoName)
+            labels = []
 
-    with io.open(videoName, 'rb') as movie:
-        videoBin = movie.read()
+            sceneClips = []
+            labelClips = []
+            for i, scene in enumerate(scenes):
+                sceneName = "scene_" + str(i) + ".mp4"
+                video.subclip(scene[0], scene[1]).write_videofile( SCENES + sceneName)
+                labels = getLabels(SCENES + sceneName)
 
-    scenes = getScenes(videoBin, fps, videoName)
+                audioName = "Audio_" + str(i) + ".mp3"
+                Text2Speech.synthesize_text(labels, AUDIOS + audioName)
+                
+                audioClip = AudioFileClip(AUDIOS + audioName)
+                ColorClip((round(width), round(height)), (0, 0, 0), duration=audioClip.duration + 1).write_videofile(AUDIOS + audioName[:-4] + ".mp4", fps=fps, audio=AUDIOS + audioName)
 
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    sceneIdx = 0
-    currentFrame = 0
-
-    while(video.isOpened()):
-        scene = scenes[sceneIdx]
-
-        if ( currentFrame == scene[0] ):
-            out = cv2.VideoWriter("scenes/scene_" + str(sceneIdx) + ".mp4", fourcc, fps, (width,height))
-        elif ( currentFrame == scene[1] ):
-            out.release()
-            sceneIdx += 1
-
-        ret, frame = video.read()
-
-        out.write(frame)
-        currentFrame += 1
-
-    video.release()
-
-    cv2.destroyAllWindows()
+            previousVideo = concatenate_videoclips([VideoFileClip(AUDIOS + "audio_0.mp4"), VideoFileClip(SCENES + "scene_0.mp4")])
+            for i in range(1, len(scenes)):
+                currentVideo = VideoFileClip(SCENES + "scene_" + str(i) + ".mp4")        
+                currentLabels = VideoFileClip(AUDIOS + "audio_" + str(i) + ".mp4")
+                previousVideo = concatenate_videoclips([previousVideo, currentLabels, currentVideo])
+            previousVideo.write_videofile(OUTPUT + videoName)

@@ -89,12 +89,13 @@ function generateText(audioFile){
 
 function readScript(ruta){
 	var runner =  require('child_process');
+	console.log('Process started');
 	runner.exec("php "+ruta + " ", (error, stdout, stderr) => {
 	if(error) {
 		console.log(`exec errorern: ${error}`);
 		return;
 	}
-	console.log(`stdout: ${stdout}`);
+	console.log(` ${stdout}`);
 });
 }
 
