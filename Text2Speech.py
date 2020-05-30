@@ -9,13 +9,12 @@ def synthesize_text(text, location):
     # Set the text input to be synthesized
     synthesis_input  = texttospeech.types.SynthesisInput(text=text)
 
-    # Build the voice request, select the language code ("en-US") and the ssml
-    # voice gender ("neutral")
+    # Build of the voice request
     voice = texttospeech.types.VoiceSelectionParams(
         language_code='en-GB',
         ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
 
-    # Select the type of audio file you want returned
+    # Type of audio file returned
     audio_config = texttospeech.types.AudioConfig(
         audio_encoding=texttospeech.enums.AudioEncoding.MP3)
     
@@ -27,4 +26,3 @@ def synthesize_text(text, location):
     with open(location, 'wb') as out:
         # Write the response to the output file.
         out.write(response.audio_content)
-        #print('Audio content written to file "output.mp3"')

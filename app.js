@@ -1,4 +1,3 @@
-
 const express = require('express');
 const fetch = require('node-fetch');
 const cheerio = require ('cheerio');
@@ -11,39 +10,6 @@ const upload = require('express-fileupload');
 const app = express();
 const port = 2022;
 app.use(express.static(path.join(__dirname, 'public')));
-
-
-
-function generateAudio(textFile){
-	// Imports the Google Cloud client library
-	const textToSpeech = require('@google-cloud/text-to-speech');
-
-	// Import other required libraries
-	const util = require('util');
-	// Creates a client
-	const client = new textToSpeech.TextToSpeechClient();
-	async function quickStart() {
-	  // The text to synthesize
-	  const text = textFile;
-
-	  // Construct the request
-	  const request = {
-	    input: {text: text},
-	    // Select the language and SSML voice gender (optional)
-	    voice: {languageCode: 'es-ES', ssmlGender: 'NEUTRAL'},
-	    // select the type of audio encoding
-	    audioConfig: {audioEncoding: 'MP3'},
-	  };
-
-	  // Performs the text-to-speech request
-	  const [response] = await client.synthesizeSpeech(request);
-	  // Write the binary audio content to a local file
-	  const writeFile = util.promisify(fs.writeFile);
-	  await writeFile('media/t2p_output.mp3', response.audioContent, 'binary');
-	  console.log('Audio content written to file: t2s_output.mp3 \n');
-	}
-	quickStart();
-}
 
 
 function generateText(audioFile){
@@ -59,14 +25,12 @@ function generateText(audioFile){
 		const audio = {
 			content: audioBytes
 		};
-
+		// Audio file configuration
 		const config = {
 			encoding: 'LINEAR16',
-			//sampleRateHertz: 16000,
 			languageCode: 'en-US'
-			//languageCode: 'es-ES'
 		};
-
+		// Prepare request
 		const request = {
 			audio: audio,
 			config: config
@@ -90,6 +54,7 @@ function generateText(audioFile){
 function readScript(ruta){
 	var runner =  require('child_process');
 	console.log('Process started');
+	// Execute the php script that is found on the route recived by parameter
 	runner.exec("php "+ruta + " ", (error, stdout, stderr) => {
 	if(error) {
 		console.log(`exec errorern: ${error}`);
@@ -99,24 +64,23 @@ function readScript(ruta){
 });
 }
 
-
-//declarar ruta a través de una variable que se setee al subir un archivo con el nombre de este
+// Execute the upload method
+// Used to actualize the content of the recieved file
 app.use(upload())
 
-//here goes the routing
+// Routing of the '/' to procese the html file when you open the website
 app.get('/', (req, res) => {
-/*var ruta = "/public/index.php";
-readScript(ruta);*/
 res.sendFile(index.html)
-
 });
 
+// When a query of '/upload' is recieved this method process the Speech to Text service:
 app.post('/upload',(req, res) => {
-
+	// Check if there's any input
 	if(req.files){
 		
 		var file = req.files.filename;
 		var filename = req.files.filename.name;
+			// Saves the file that the user wants to upload locally on a determinated route
 			file.mv("/home/albavemo11/git/sm/media/uploaded/"+filename, function(err){
 				if(err){
 					console.log(err);
@@ -124,17 +88,22 @@ app.post('/upload',(req, res) => {
 				}
 				else {
 					var audioFile = fs.readFileSync("/home/albavemo11/git/sm/media/uploaded/"+filename);
+					// Executes the Speech to Text method
 					generateText(audioFile);
+					// Downloas and serves to the client the resultant txt output
 					res.download("/home/albavemo11/git/sm/media/s2t_output.txt");
 				}
 			});
 	}
 });
+
+// When a query of '/apis' is recieved this method process the videoAI script
 app.post('/apis', (req,res) => {
-	
+	// Check if there's any input
 	if(req.files) {
 		var file = req.files.filename;
 		var filename = req.files.filename.name;
+			// Saves the file that the user wants to upload locally on a determinated route
 			file.mv("/home/albavemo11/git/sm/input/"+filename, function(err){
         			if(err){
 					console.log(err);
@@ -142,15 +111,16 @@ app.post('/apis', (req,res) => {
 				}
 				else{
 					var videoAIRute = "/home/albavemo11/git/sm/public/index.php";
+					// Call the php that runs the python code
 					readScript(videoAIRute);
-					
+					// Downloas and serves to the client the resultant mp4 output
+					res.download("/home/albavemo11/git/sm/output/vd_output.mp4");
 				}
 			});
 	}
 });
 
-//	generateAudio(textFile);
-//	generateText(audioFile);
-	
-app.listen(port, () => console.log(`Example app listening on port ${port}!` + '\n'));
+// Initialization console message
+app.listen(port, () => console.log(`Ap llistening on port ${port}!` + '\n'));
+
 
