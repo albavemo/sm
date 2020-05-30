@@ -90,7 +90,7 @@ app.post('/upload',(req, res) => {
 					var audioFile = fs.readFileSync("/home/albavemo11/git/sm/media/uploaded/"+filename);
 					// Executes the Speech to Text method
 					generateText(audioFile);
-					// Downloas and serves to the client the resultant txt output
+					// Downloads and serves to the client the resultant txt output
 					res.download("/home/albavemo11/git/sm/media/s2t_output.txt");
 				}
 			});
@@ -113,7 +113,7 @@ app.post('/apis', (req,res) => {
 					var videoAIRute = "/home/albavemo11/git/sm/public/index.php";
 					// Call the php that runs the python code
 					readScript(videoAIRute);
-					// Downloas and serves to the client the resultant mp4 output
+					// Downloads and serves to the client the resultant mp4 output
 					res.download("/home/albavemo11/git/sm/output/vd_output.mp4");
 				}
 			});
